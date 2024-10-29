@@ -1,6 +1,6 @@
 {
   "name": "universal-logger-pro",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Enterprise-grade universal logging solution for any JavaScript/TypeScript project",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -20,7 +20,7 @@
     "monitoring",
     "security"
   ],
-  "author": "[Your Name] <your.email@example.com>",
+  "author": "wizcreations7 <contact@wizcreations.xyz>",
   "license": "MIT",
   "dependencies": {
     "chalk": "^4.1.2"
