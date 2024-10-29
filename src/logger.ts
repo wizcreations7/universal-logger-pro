@@ -42,7 +42,7 @@ export class Logger {
   }
 
   private formatMessage(level: LogLevel, message: string, metadata?: LogMetadata): string {
-    const timestamp = new Date().toISOString().replace('T', ' ').slice(0, -5);
+    const timestamp = getTimestamp();
     
     if (this.options.format === 'json') {
         return JSON.stringify({
