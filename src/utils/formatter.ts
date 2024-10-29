@@ -1,7 +1,7 @@
 import chalk from 'chalk';
 import { LogLevel } from '../types';
 
-const padTime = (time: string) => chalk.dim(`[${time}]`);
+const padTime = (time: string) => chalk.dim(time);
 const padLevel = (level: string, color: (text: string) => string) => 
     color(`[${level.toUpperCase()}]`);
 
