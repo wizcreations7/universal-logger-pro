@@ -12,7 +12,9 @@ A comprehensive, feature-rich logging solution for any JavaScript/TypeScript pro
 - 🛠️ Highly configurable
 - 🌐 Support for any JavaScript environment
 
-## Installation```bash
+## Installation
+
+```bash
 npm install universal-logger-pro
 ```
 
