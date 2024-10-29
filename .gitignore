@@ -2,3 +2,4 @@ node_modules/
 dist/
 *.log
 .DS_Store
+universal-logger-pro-1.0.0.tgz
