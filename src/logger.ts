@@ -1,4 +1,4 @@
-import { writeFileSync, appendFileSync, existsSync, mkdirSync } from 'fs';
+import { writeFile, appendFile, existsSync, mkdirSync, renameSync, promises as fsPromises } from 'fs';
 import { dirname } from 'path';
 import { colors, symbols } from './utils/colors';
 import { getTimestamp } from './utils/time';
@@ -42,7 +42,7 @@ export class Logger {
   }
 
   private formatMessage(level: LogLevel, message: string, metadata?: LogMetadata): string {
-    const timestamp = getTimestamp();
+    const timestamp = new Date().toISOString().replace('T', ' ').slice(0, -5);
     
     if (this.options.format === 'json') {
         return JSON.stringify({
@@ -61,6 +61,33 @@ export class Logger {
         this.options.colors ? colors[level] : (text: string) => text,
         metadata?.source
     );
+  }
+
+  private rotateLogs() {
+    const { outputFile, rotateCount } = this.options;
+    for (let i = rotateCount - 1; i > 0; i--) {
+      const oldFile = `${outputFile}.${i}`;
+      const newFile = `${outputFile}.${i + 1}`;
+      if (existsSync(oldFile)) {
+        renameSync(oldFile, newFile);
+      }
+    }
+    renameSync(outputFile, `${outputFile}.1`);
+  }
+
+  private async logToFile(entry: LogEntry) {
+    const { outputFile, maxSize, rotate } = this.options;
+    try {
+      if (existsSync(outputFile) && rotate) {
+        const { size } = await fsPromises.stat(outputFile);
+        if (size >= maxSize) {
+          this.rotateLogs();
+        }
+      }
+      await fsPromises.appendFile(outputFile, JSON.stringify(entry) + '\n', 'utf8');
+    } catch (error) {
+      console.error('Failed to write log to file:', error);
+    }
   }
 
   private log(level: LogLevel, message: string, metadata?: LogMetadata): void {
@@ -90,11 +117,7 @@ export class Logger {
         metadata: { ...this.options.metadata, ...metadata }
       };
 
-      appendFileSync(
-        this.options.outputFile,
-        JSON.stringify(entry) + '\n',
-        'utf8'
-      );
+      this.logToFile(entry);
     }
   }
 
@@ -347,5 +370,9 @@ export class Logger {
 
   public sync(message: string, metadata?: LogMetadata): void {
     this.log('sync', message, metadata);
+  }
+
+  public updateOptions(newOptions: Partial<LoggerOptions>): void {
+    this.options = { ...this.options, ...newOptions };
   }
 } 
