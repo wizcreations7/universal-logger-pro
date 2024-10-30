@@ -9,6 +9,8 @@ This directory contains example implementations of Universal Logger Pro for vari
 - `error-handling.js` - Different approaches to error logging
 - `typescript-example.ts` - TypeScript implementation with type safety
 - `production-setup.js` - Production-ready configuration with best practices
+- `value-formatting.js` - Examples of complex data type formatting
+- `advanced-features.js` - Advanced features like masking, buffering, and context providers
 
 ## Running Examples
 
