@@ -71,6 +71,7 @@ import chalk from 'chalk';
       prefix: '',
       metadata: {},
       outputFile: '',
+      datePattern: 'YYYY-MM-DD',
       console: true,
       maxSize: 10 * 1024 * 1024, // 10MB
       rotate: true,
@@ -78,11 +79,39 @@ import chalk from 'chalk';
       silent: false,
       showEmoji: false,
       showLogType: true,
+      timeFormat: 'ISO',
+      timeZone: 'UTC',
+      indentation: 2,
+      maskSecrets: false,
+      maskFields: [],
+      maskChar: '*',
+      bufferSize: 1000,
+      flushInterval: 5000,
+      asyncLogging: false,
+      exitOnError: false,
+      logFileMode: 0o666,
+      compression: false,
+      compressFormat: 'gzip',
+      consoleJson: false,
+      colorizeObjects: true,
+      levelColumnWidth: 7,
+      sampleRate: 1,
+      prettyPrint: false,
+      debugMode: false,
+      stackTraceLimit: 10,
+      errorHandler: (error: Error) => console.error('Logging error:', error),
+      contextProvider: () => ({}),
+      correlationIdPath: [],
+      filter: (entry: LogEntry) => true,
       ...options
     };
 
     if (this.options.outputFile) {
       this.ensureLogDirectory();
+    }
+
+    if (this.options.bufferSize > 0) {
+      this.setupBuffering();
     }
   }
 
@@ -110,15 +139,38 @@ import chalk from 'chalk';
     const timestamp = this.getFormattedTimestamp();
     const logType = level !== defaultTypeMapping[level] ? level : undefined;
     
-    if (this.options.format === 'json') {
-        return JSON.stringify({
-            timestamp,
-            level: defaultTypeMapping[level],
-            type: logType,
-            message,
-            ...metadata,
-            ...this.options.metadata
-        });
+    // Apply sampling
+    if (Math.random() > (this.options.sampleRate ?? 1)) {
+      return '';
+    }
+
+    // Apply custom filter
+    if (this.options.filter) {
+      const entry: LogEntry = { level, message, timestamp, metadata };
+      if (!this.options.filter(entry)) {
+        return '';
+      }
+    }
+
+    // Mask sensitive data
+    let maskedMetadata = this.maskSensitiveData(metadata);
+
+    // Add dynamic context
+    if (this.options.contextProvider) {
+      const context = this.options.contextProvider();
+      maskedMetadata = { ...maskedMetadata, ...context };
+    }
+
+    // Format based on options
+    if (this.options.consoleJson) {
+      return JSON.stringify({
+        timestamp,
+        level: defaultTypeMapping[level],
+        type: logType,
+        message,
+        ...maskedMetadata,
+        ...this.options.metadata
+      }, null, this.options.prettyPrint ? this.options.indentation : 0);
     }
 
     const levelColor = this.options.colors ? colors[defaultTypeMapping[level]] : (text: string) => text;
@@ -817,6 +869,121 @@ import chalk from 'chalk';
         } catch (error) {
             console.error(`Failed to create log directory: ${dir}`, error);
         }
+    }
+  }
+
+  private buffer: LogEntry[] = [];
+  private flushTimeout?: NodeJS.Timeout;
+
+  private setupBuffering(): void {
+    if (this.options.flushInterval) {
+      this.flushTimeout = setInterval(() => {
+        this.flushBuffer();
+      }, this.options.flushInterval);
+    }
+  }
+
+  private async flushBuffer(): Promise<void> {
+    if (this.buffer.length === 0) return;
+
+    const entries = [...this.buffer];
+    this.buffer = [];
+
+    if (this.options.outputFile) {
+      try {
+        await this.writeBufferedLogs(entries);
+      } catch (error) {
+        this.handleError(error as Error);
+      }
+    }
+  }
+
+  private handleError(error: Error): void {
+    if (this.options.errorHandler) {
+      this.options.errorHandler(error);
+    } else if (this.options.exitOnError) {
+      console.error('Fatal logging error:', error);
+      process.exit(1);
+    } else {
+      console.error('Logging error:', error);
+    }
+  }
+
+  private maskSensitiveData(data: any): any {
+    if (!this.options.maskSecrets) return data;
+
+    const mask = (obj: any): any => {
+      if (typeof obj !== 'object' || obj === null) return obj;
+      
+      const masked = Array.isArray(obj) ? [...obj] : { ...obj };
+      for (const [key, value] of Object.entries(masked)) {
+        if (this.options.maskFields?.includes(key)) {
+          masked[key] = this.options.maskChar!.repeat(8);
+        } else if (typeof value === 'object') {
+          masked[key] = mask(value);
+        }
+      }
+      return masked;
+    };
+
+    return mask(data);
+  }
+
+  private async writeBufferedLogs(entries: LogEntry[]): Promise<void> {
+    if (this.options.asyncLogging) {
+      await Promise.all(entries.map(entry => this.writeLogEntry(entry)));
+    } else {
+      for (const entry of entries) {
+        await this.writeLogEntry(entry);
+      }
+    }
+  }
+
+  private async writeLogEntry(entry: LogEntry): Promise<void> {
+    const { outputFile, maxSize, rotate } = this.options;
+    try {
+      if (rotate && existsSync(outputFile)) {
+        const { size } = await fsPromises.stat(outputFile);
+        if (size >= maxSize) {
+          this.rotateLogs();
+        }
+      }
+      await fsPromises.appendFile(
+        outputFile, 
+        JSON.stringify(entry) + '\n', 
+        'utf8'
+      );
+    } catch (error) {
+      console.error('Failed to write log to file:', error);
+    }
+
+    if (this.options.compression && (await this.shouldRotate())) {
+      await this.compressRotatedLogs();
+    }
+  }
+
+  private async compressRotatedLogs(): Promise<void> {
+    // Implementation of log compression
+    // This would use zlib for gzip or another library for zip compression
+  }
+
+  public destroy(): void {
+    if (this.flushTimeout) {
+      clearInterval(this.flushTimeout);
+    }
+    this.flushBuffer().catch(this.handleError.bind(this));
+  }
+
+  private async shouldRotate(): Promise<boolean> {
+    if (!this.options.outputFile || !this.options.rotate) return false;
+    
+    try {
+      const stats = existsSync(this.options.outputFile) 
+        ? await fsPromises.stat(this.options.outputFile)
+        : null;
+      return stats !== null && stats.size >= this.options.maxSize;
+    } catch {
+      return false;
     }
   }
 }

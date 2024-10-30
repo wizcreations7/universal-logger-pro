@@ -86,6 +86,10 @@ export interface LogMetadata {
  * @property silent - Suppress all log output when true
  * @property showEmoji - Enable/disable emojis in log messages
  * @property showLogType - Enable/disable log type display
+ * 
+ * @remarks
+ * This type maintains backwards compatibility while providing granular logging categories
+ * organized by functional areas.
  */
 export interface LoggerOptions {
   level?: LogSeverity;
@@ -103,6 +107,47 @@ export interface LoggerOptions {
   silent?: boolean;
   showEmoji?: boolean;
   showLogType?: boolean;
+  
+  // Output Formatting
+  timeFormat?: 'ISO' | 'UTC' | 'UNIX' | 'locale';
+  timeZone?: string;  // e.g., 'America/New_York'
+  indentation?: number;  // Spaces for metadata formatting
+  maskSecrets?: boolean;  // Mask sensitive data
+  maskFields?: string[];  // Fields to mask
+  maskChar?: string;  // Character for masking (default: '*')
+  
+  // Performance & Buffering
+  bufferSize?: number;  // Buffer size for batch writing
+  flushInterval?: number;  // Flush interval in ms
+  asyncLogging?: boolean;  // Enable async logging
+  
+  // Error Handling
+  errorHandler?: (error: Error) => void;
+  exitOnError?: boolean;
+  
+  // File Management
+  logFileMode?: number;  // File permissions (e.g., 0o666)
+  compression?: boolean;  // Compress rotated logs
+  compressFormat?: 'gzip' | 'zip';
+  datePattern?: string;  // Date pattern for rotation
+  
+  // Console Output
+  consoleJson?: boolean;  // Format console output as JSON
+  colorizeObjects?: boolean;  // Colorize object output
+  levelColumnWidth?: number;  // Width of level column
+  
+  // Context & Correlation
+  contextProvider?: () => LogMetadata;  // Dynamic context
+  correlationIdPath?: string[];  // Path to correlation ID in requests
+  
+  // Filtering & Sampling
+  filter?: (entry: LogEntry) => boolean;
+  sampleRate?: number;  // 0-1 for sampling logs
+  
+  // Development
+  prettyPrint?: boolean;  // Pretty print objects
+  debugMode?: boolean;  // Extra debug information
+  stackTraceLimit?: number;  // Limit stack trace lines
 }
 
 /**
