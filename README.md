@@ -1,7 +1,3 @@
-
-
-
-
 # Universal Logger Pro
 
 A comprehensive logging solution for JavaScript/TypeScript projects with 40+ specialized log types, file rotation, and structured logging support. Perfect for web services, microservices, and enterprise applications.
@@ -305,6 +301,94 @@ const logger = Logger.getInstance({
         environment: process.env.NODE_ENV,
         instance: process.env.INSTANCE_ID
     }
+});
+```
+
+## Advanced Configuration
+
+### Formatting Options
+```typescript
+const logger = Logger.getInstance({
+    // Timestamp formatting
+    timeFormat: 'ISO',  // 'ISO' | 'UTC' | 'UNIX' | 'locale'
+    timeZone: 'America/New_York',  // Any valid timezone
+    
+    // Output styling
+    indentation: 2,  // Spaces for metadata formatting
+    levelColumnWidth: 7,  // Width of level column
+    colorizeObjects: true,  // Colorize object output
+    prettyPrint: false,  // Pretty print objects
+    
+    // Development helpers
+    debugMode: false,  // Extra debug information
+    stackTraceLimit: 10,  // Limit stack trace lines
+});
+```
+
+### Security Features
+```typescript
+const logger = Logger.getInstance({
+    // Data protection
+    maskSecrets: true,  // Mask sensitive data
+    maskFields: ['password', 'token', 'key'],  // Fields to mask
+    maskChar: '*',  // Character for masking
+});
+```
+
+### Performance Options
+```typescript
+const logger = Logger.getInstance({
+    // Buffering & async
+    bufferSize: 1000,  // Buffer size for batch writing
+    flushInterval: 5000,  // Flush interval in ms
+    asyncLogging: true,  // Enable async logging
+    
+    // File management
+    compression: true,  // Compress rotated logs
+    compressFormat: 'gzip',  // 'gzip' | 'zip'
+    logFileMode: 0o666,  // File permissions
+});
+```
+
+### Advanced Features
+```typescript
+const logger = Logger.getInstance({
+    // Context & correlation
+    contextProvider: () => ({
+        requestId: getRequestId(),
+        userId: getCurrentUser()
+    }),
+    correlationIdPath: ['headers', 'x-correlation-id'],
+    
+    // Filtering & sampling
+    filter: (entry) => entry.level !== 'debug',
+    sampleRate: 0.1,  // Log 10% of entries
+    
+    // Error handling
+    errorHandler: (error) => notifyAdmin(error),
+    exitOnError: false,
+});
+```
+
+## Value Formatting
+
+The logger now supports comprehensive formatting for various data types:
+
+- **Web APIs**: Blob, FormData, URLSearchParams, WebSocket
+- **TypedArrays**: Int8Array, Uint8Array, Float32Array, etc.
+- **Buffers**: ArrayBuffer, SharedArrayBuffer, DataView
+- **Collections**: Map, Set, WeakMap, WeakSet
+- **Promises & Functions**: Promise states, named/anonymous functions
+- **Errors**: Full stack traces with proper indentation
+- **Custom Objects**: Respects custom toString() implementations
+
+Example output:
+```typescript
+logger.debug('Complex data', {
+    buffer: new Uint8Array([1, 2, 3]),
+    map: new Map([['key', 'value']]),
+    error: new Error('Test error'),
+    blob: new Blob(['test'], { type: 'text/plain' })
 });
 ```
 
