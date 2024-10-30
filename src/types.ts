@@ -1,90 +1,33 @@
-export type LogLevel = 
-  // Standard Levels
-  | 'trace' 
-  | 'debug' 
-  | 'info' 
-  | 'success'
-  | 'warn' 
-  | 'error' 
-  | 'fatal' 
-  
-  // Web & API Related
-  | 'http' 
-  | 'request'
-  | 'response'
-  | 'graphql'
-  | 'websocket'
-  | 'api'
-  
-  // Security Related
-  | 'security'
-  | 'audit'
-  | 'auth'
-  | 'access'
-  | 'firewall'
-  
-  // Database Related
-  | 'database'
-  | 'query'
-  | 'migration'
-  | 'cache'
-  
-  // Performance Related
-  | 'performance'
-  | 'metric'
-  | 'benchmark'
-  | 'memory'
-  
-  // System Related
-  | 'system'
-  | 'process'
-  | 'cpu'
-  | 'memory'
-  | 'disk'
-  | 'network'
-  
-  // Development & Debug
-  | 'verbose'
-  | 'silly'
-  | 'test'
-  | 'mock'
-  | 'debug-verbose'
-  
-  // Business Logic
-  | 'business'
-  | 'transaction'
-  | 'workflow'
-  | 'event'
-  
-  // Integration
-  | 'integration'
-  | 'webhook'
-  | 'third-party'
-  | 'external'
-  
-  // User Interaction
-  | 'ui'
-  | 'interaction'
-  | 'analytics'
-  | 'tracking'
-  
-  // Background Tasks
-  | 'job'
-  | 'queue'
-  | 'cron'
-  | 'task'
-  
-  // Infrastructure
-  | 'kubernetes'
-  | 'docker'
-  | 'cloud'
-  | 'serverless'
-  
-  // Mobile Specific
-  | 'mobile'
-  | 'push'
-  | 'offline'
-  | 'sync';
+export type LogSeverity = 'trace' | 'debug' | 'info' | 'warn' | 'error' | 'fatal';
+
+// Keep existing LogLevel type for backwards compatibility
+export type LogLevel = LogSeverity | 
+    // Development & Debug
+    'verbose' | 'silly' | 'test' | 'mock' |
+    // API & Web
+    'http' | 'request' | 'response' | 'graphql' | 'websocket' | 'api' |
+    // Security
+    'security' | 'audit' | 'auth' | 'access' | 'firewall' |
+    // Data
+    'database' | 'query' | 'migration' | 'cache' |
+    // Performance
+    'performance' | 'metric' | 'benchmark' | 'memory' |
+    // System
+    'system' | 'process' | 'cpu' | 'disk' | 'network' |
+    // Infrastructure  
+    'kubernetes' | 'docker' | 'cloud' | 'serverless' |
+    // Business
+    'business' | 'transaction' | 'workflow' | 'event' |
+    // Integration
+    'integration' | 'webhook' | 'external' |
+    // UI
+    'ui' | 'interaction' | 'analytics' | 'tracking' |
+    // Background
+    'job' | 'queue' | 'cron' | 'task' |
+    // Mobile
+    'mobile' | 'push' | 'offline' | 'sync' |
+    // Additional
+    'success';
 
 export type LogFormat = 'json' | 'text' | 'console';
 
@@ -98,7 +41,7 @@ export interface LogMetadata {
 }
 
 export interface LoggerOptions {
-  level?: LogLevel;
+  level?: LogSeverity;
   format?: LogFormat;
   timestamp?: boolean;
   colors?: boolean;
@@ -117,4 +60,10 @@ export interface LogEntry {
   message: string;
   timestamp: string;
   metadata?: LogMetadata;
-} 
+}
+
+// Add new interface for log type configuration
+export interface LogTypeConfig {
+    type: LogLevel;
+    severity: LogSeverity;
+}
