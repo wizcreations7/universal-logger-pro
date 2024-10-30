@@ -1,5 +1,35 @@
+/**
+ * @fileoverview Logging color and symbol configurations
+ * @module LogColors
+ * @description
+ * Provides comprehensive color and symbol mappings for enhanced visual logging output.
+ * Implements consistent visual styling across different log types and severity levels
+ * to improve log readability and quick visual identification.
+ */
+
 import chalk from 'chalk';
 
+/**
+ * Color configuration mapping for different log types and severity levels
+ * 
+ * @description
+ * Defines chalk color styles for each log type to provide consistent
+ * visual differentiation in console output. The color scheme follows
+ * common logging conventions:
+ * 
+ * - Error states (error, fatal): Red variants
+ * - Warnings (warn, security): Yellow variants  
+ * - Success/Good states (success, performance): Green variants
+ * - Info/Normal states (info, debug): Blue/Cyan variants
+ * - System/Infrastructure (system, kubernetes): Bold variants
+ * - Specialized domains use appropriate semantic colors
+ * 
+ * @example
+ * ```typescript
+ * console.log(colors.error('Error message')); // Prints in red
+ * console.log(colors.success('Success message')); // Prints in green
+ * ```
+ */
 export const colors = {
     trace: chalk.gray,
     debug: chalk.blue,
@@ -63,6 +93,30 @@ export const colors = {
     sync: chalk.green
 };
 
+/**
+ * Symbol configuration mapping for different log types and severity levels
+ * 
+ * @description
+ * Defines emoji symbols for each log type to provide quick visual identification
+ * in console output. The symbols are carefully chosen to be:
+ * 
+ * - Semantically relevant to their log type
+ * - Visually distinct and easily recognizable
+ * - Compatible across different terminal environments
+ * - Consistent with common logging conventions
+ * 
+ * Symbols help in:
+ * - Quick visual scanning of logs
+ * - Pattern recognition in log streams
+ * - Improved log readability
+ * - Clear status indication
+ * 
+ * @example
+ * ```typescript
+ * console.log(`${symbols.error} Error occurred`); // Prints "❌ Error occurred"
+ * console.log(`${symbols.success} Operation completed`); // Prints "✅ Operation completed"
+ * ```
+ */
 export const symbols = {
     trace: '🔍',
     debug: '🐛',
