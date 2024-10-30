@@ -56,7 +56,8 @@ export class Logger {
    */
   private constructor(options: LoggerOptions = {}) {
     this.options = {
-      level: 'info',
+      level: 'info' as LogSeverity,
+      minLevel: 'info' as LogSeverity,
       format: 'console',
       timestamp: true,
       colors: true,
@@ -72,10 +73,7 @@ export class Logger {
     };
 
     if (this.options.outputFile) {
-      const dir = dirname(this.options.outputFile);
-      if (!existsSync(dir)) {
-        mkdirSync(dir, { recursive: true });
-      }
+      this.ensureLogDirectory();
     }
   }
 
@@ -142,16 +140,20 @@ export class Logger {
    * @private
    * @param entry - Log entry to write
    */
-  private async logToFile(entry: LogEntry) {
+  private async logToFile(entry: LogEntry): Promise<void> {
     const { outputFile, maxSize, rotate } = this.options;
     try {
-      if (existsSync(outputFile) && rotate) {
+      if (rotate && existsSync(outputFile)) {
         const { size } = await fsPromises.stat(outputFile);
         if (size >= maxSize) {
           this.rotateLogs();
         }
       }
-      await fsPromises.appendFile(outputFile, JSON.stringify(entry) + '\n', 'utf8');
+      await fsPromises.appendFile(
+        outputFile, 
+        JSON.stringify(entry) + '\n', 
+        'utf8'
+      );
     } catch (error) {
       console.error('Failed to write log to file:', error);
     }
@@ -262,9 +264,9 @@ export class Logger {
    * @param metadata - Optional metadata
    */
   public error(message: string | Error, metadata?: LogMetadata): void {
-    const errorMessage = message instanceof Error ? 
-      `${message.message}\n${message.stack}` : 
-      message;
+    const errorMessage = message instanceof Error 
+        ? `${message.message}\n${message.stack}` 
+        : String(message);
     this.log('error', errorMessage, metadata);
   }
 
@@ -274,9 +276,9 @@ export class Logger {
    * @param metadata - Optional metadata
    */
   public fatal(message: string | Error, metadata?: LogMetadata): void {
-    const errorMessage = message instanceof Error ? 
-      `${message.message}\n${message.stack}` : 
-      message;
+    const errorMessage = message instanceof Error 
+        ? `${message.message}\n${message.stack}` 
+        : String(message);
     this.log('fatal', errorMessage, metadata);
   }
 
@@ -769,5 +771,18 @@ export class Logger {
    */
   public updateOptions(newOptions: Partial<LoggerOptions>): void {
     this.options = { ...this.options, ...newOptions };
+  }
+
+  private ensureLogDirectory(): void {
+    if (this.options.outputFile) {
+        const dir = dirname(this.options.outputFile);
+        try {
+            if (!existsSync(dir)) {
+                mkdirSync(dir, { recursive: true });
+            }
+        } catch (error) {
+            console.error(`Failed to create log directory: ${dir}`, error);
+        }
+    }
   }
 }
