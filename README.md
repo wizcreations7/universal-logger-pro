@@ -18,6 +18,32 @@ A comprehensive logging solution for JavaScript/TypeScript projects with 40+ spe
 - 🚀 High performance
 - 🌐 Works in any JavaScript environment
 
+## Log Levels
+
+The logger supports the following log levels in order of increasing severity:
+
+| Level   | Priority | Description                                      |
+|---------|----------|--------------------------------------------------|
+| TRACE   | 0        | Most detailed debugging information              |
+| DEBUG   | 1        | Debugging information                            |
+| INFO    | 2        | General operational information                  |
+| SUCCESS | 3        | Successful operations                            |
+| WARN    | 4        | Warning messages, potential issues               |
+| ERROR   | 5        | Error conditions                                 |
+| FATAL   | 6        | Critical errors causing system shutdown          |
+
+### Setting Log Level
+```javascript
+// Set minimum log level
+const logger = Logger.getInstance({
+    minLevel: 'info',    // Only show logs at INFO level and above
+    colors: true
+});
+
+// Update log level at runtime
+logger.updateOptions({ minLevel: 'debug' });
+```
+
 ## Quick Start
 
 ````javascript
@@ -60,10 +86,12 @@ yarn add universal-logger-pro
 ````
 
 
+
+
 ## Configuration
 
 ### Basic Setup
-````javascript
+```javascript
 const logger = Logger.getInstance({
     // Essential options
     colors: true,                    // Enable colored output
@@ -71,6 +99,7 @@ const logger = Logger.getInstance({
     outputFile: 'app.log',          // Enable file logging
     rotate: true,                    // Enable log rotation
     maxSize: 5 * 1024 * 1024,       // 5MB rotation size
+    minLevel: 'info',               // Minimum log level to output
     
     // Optional features
     prefix: 'API',                   // Add prefix to logs
@@ -84,7 +113,7 @@ const logger = Logger.getInstance({
         node_env: process.env.NODE_ENV
     }
 });
-````
+```
 
 
 ### Runtime Updates
@@ -256,12 +285,13 @@ const logger = Logger.getInstance({
 
 
 ### Production Best Practices
-````javascript
+```javascript
 const logger = Logger.getInstance({
     // Basic configuration
     colors: process.stdout.isTTY,    // Colors in dev, plain in prod
     format: 'json',                  // Structured logging in prod
     timestamp: true,
+    minLevel: process.env.NODE_ENV === 'production' ? 'info' : 'debug',
     
     // File handling
     outputFile: 'logs/app.log',
@@ -276,8 +306,7 @@ const logger = Logger.getInstance({
         instance: process.env.INSTANCE_ID
     }
 });
-````
-
+```
 
 ## Links
 
