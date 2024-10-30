@@ -31,9 +31,9 @@ import chalk from 'chalk';
  * ```
  */
 export const colors = {
-    trace: chalk.gray,
-    debug: chalk.blue,
-    info: chalk.cyan,
+    trace: chalk.grey,
+    debug: chalk.magenta,
+    info: chalk.blue,
     success: chalk.green,
     warn: chalk.yellow,
     error: chalk.red,
