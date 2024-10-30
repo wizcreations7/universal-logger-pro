@@ -2,8 +2,9 @@ import { writeFile, appendFile, existsSync, mkdirSync, renameSync, promises as f
 import { dirname } from 'path';
 import { colors, symbols } from './utils/colors';
 import { getTimestamp } from './utils/time';
-import { LogLevel, LoggerOptions, LogEntry, LogMetadata } from './types';
+import { LogLevel, LoggerOptions, LogEntry, LogMetadata, LogSeverity } from './types';
 import { formatLogLine } from './utils/formatter';
+import { defaultLogLevels, defaultTypeMapping } from './utils/levels';
 
 export class Logger {
   private options: Required<LoggerOptions>;
@@ -58,7 +59,7 @@ export class Logger {
         timestamp,
         level,
         message,
-        this.options.colors ? colors[level] : (text: string) => text,
+        this.options.colors ? colors[defaultTypeMapping[level] as LogSeverity] : (text: string) => text,
         metadata?.source
     );
   }
@@ -90,8 +91,16 @@ export class Logger {
     }
   }
 
+  private shouldLog(level: LogLevel): boolean {
+    const configuredLevel = defaultLogLevels[this.options.level || 'info'];
+    const messageSeverity = defaultTypeMapping[level];
+    const messageLevel = defaultLogLevels[messageSeverity];
+    
+    return messageLevel >= configuredLevel;
+  }
+
   private log(level: LogLevel, message: string, metadata?: LogMetadata): void {
-    if (this.options.silent) return;
+    if (this.options.silent || !this.shouldLog(level)) return;
 
     const formattedMessage = this.formatMessage(level, message, metadata);
 
@@ -375,4 +384,4 @@ export class Logger {
   public updateOptions(newOptions: Partial<LoggerOptions>): void {
     this.options = { ...this.options, ...newOptions };
   }
-} 
+}
