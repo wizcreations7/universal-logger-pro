@@ -72,6 +72,7 @@ export interface LogMetadata {
  * Configuration options for initializing the logger instance.
  * 
  * @property level - Minimum severity level for log entries to be processed
+ * @property minLevel - Minimum severity level for log entries to be processed
  * @property format - Output format for log entries
  * @property timestamp - Whether to include timestamps in log entries
  * @property colors - Enable/disable colored output in console logs
@@ -86,6 +87,7 @@ export interface LogMetadata {
  */
 export interface LoggerOptions {
   level?: LogSeverity;
+  minLevel?: LogSeverity;
   format?: LogFormat;
   timestamp?: boolean;
   colors?: boolean;
