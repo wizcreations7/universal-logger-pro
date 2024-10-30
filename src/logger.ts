@@ -940,7 +940,7 @@ import chalk from 'chalk';
   }
 
   private async writeLogEntry(entry: LogEntry): Promise<void> {
-    const { outputFile, maxSize, rotate } = this.options;
+    const { outputFile, maxSize, rotate, logFileMode } = this.options;
     try {
       if (rotate && existsSync(outputFile)) {
         const { size } = await fsPromises.stat(outputFile);
@@ -951,7 +951,10 @@ import chalk from 'chalk';
       await fsPromises.appendFile(
         outputFile, 
         JSON.stringify(entry) + '\n', 
-        'utf8'
+        { 
+          encoding: 'utf8',
+          mode: logFileMode
+        }
       );
     } catch (error) {
       console.error('Failed to write log to file:', error);
@@ -985,5 +988,17 @@ import chalk from 'chalk';
     } catch {
       return false;
     }
+  }
+
+  private extractCorrelationId(metadata: LogMetadata): string | undefined {
+    const { correlationIdPath } = this.options;
+    if (!correlationIdPath) return undefined;
+
+    let value = metadata;
+    for (const key of correlationIdPath) {
+        if (!value || typeof value !== 'object') return undefined;
+        value = value[key];
+    }
+    return typeof value === 'string' ? value : undefined;
   }
 }
