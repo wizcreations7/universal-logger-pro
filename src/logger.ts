@@ -3,11 +3,12 @@
  * @module Logger
  * @description
  * Provides a comprehensive logging framework with support for:
- * - Multiple log levels and specialized logging categories
- * - File and console output with rotation
- * - Structured logging with metadata
- * - Color-coded console output
- * - Singleton pattern for global logging
+ * - Multiple log levels (trace, debug, info, warn, error, fatal) and specialized logging categories
+ * - File and console output with automatic log rotation
+ * - Structured logging with metadata and context
+ * - Color-coded console output with emoji support
+ * - Singleton pattern for global logging instance
+ * - Specialized logging categories for web, security, database, performance, etc.
  */
 
 import { writeFile, appendFile, existsSync, mkdirSync, renameSync, promises as fsPromises } from 'fs';
@@ -17,6 +18,7 @@ import { getTimestamp } from './utils/time';
 import { LogLevel, LoggerOptions, LogEntry, LogMetadata, LogSeverity } from './types';
 import { formatLogLine } from './utils/formatter';
 import { defaultLogLevels, defaultTypeMapping } from './utils/levels';
+import chalk from 'chalk';
 
 /**
  * Core Logger class implementing comprehensive logging capabilities
@@ -28,21 +30,26 @@ import { defaultLogLevels, defaultTypeMapping } from './utils/levels';
  * - Log file rotation and size management
  * - Structured metadata and context
  * - Specialized logging categories for different domains
- * - Color-coded console output
- * - Global configuration
+ * - Color-coded console output with optional emoji
+ * - Global singleton configuration
+ * - Timestamp caching for performance
+ * - Automatic log directory creation
  * 
  * @example
  * ```typescript
  * const logger = Logger.getInstance({
  *   level: 'info',
  *   format: 'json',
- *   outputFile: './logs/app.log'
+ *   outputFile: './logs/app.log',
+ *   showEmoji: true,
+ *   colors: true
  * });
  * 
  * logger.info('Application started', { version: '1.0.0' });
+ * logger.error(new Error('Something went wrong'));
+ * logger.http('GET /api/users', { status: 200, duration: '120ms' });
  * ```
- */
-export class Logger {
+ */export class Logger {
   /** @private Current logger configuration */
   private options: Required<LoggerOptions>;
   
@@ -56,8 +63,8 @@ export class Logger {
    */
   private constructor(options: LoggerOptions = {}) {
     this.options = {
-      level: 'info' as LogSeverity,
-      minLevel: 'info' as LogSeverity,
+      level: 'info',
+      minLevel: options.minLevel || options.level || 'info',
       format: 'console',
       timestamp: true,
       colors: true,
@@ -69,6 +76,8 @@ export class Logger {
       rotate: true,
       rotateCount: 5,
       silent: false,
+      showEmoji: false,
+      showLogType: true,
       ...options
     };
 
@@ -98,25 +107,50 @@ export class Logger {
    * @returns Formatted log message string
    */
   private formatMessage(level: LogLevel, message: string, metadata?: LogMetadata): string {
-    const timestamp = new Date().toISOString().replace('T', ' ').slice(0, -5);
+    const timestamp = this.getFormattedTimestamp();
+    const logType = level !== defaultTypeMapping[level] ? level : undefined;
     
     if (this.options.format === 'json') {
         return JSON.stringify({
             timestamp,
-            level,
+            level: defaultTypeMapping[level],
+            type: logType,
             message,
             ...metadata,
             ...this.options.metadata
         });
     }
 
+    const levelColor = this.options.colors ? colors[defaultTypeMapping[level]] : (text: string) => text;
+    const typeColor = this.options.colors ? colors[level] : (text: string) => text;
+    
     return formatLogLine(
         timestamp,
-        level,
-        message,
-        this.options.colors ? colors[defaultTypeMapping[level] as LogSeverity] : (text: string) => text,
-        metadata?.source
+        defaultTypeMapping[level],
+        this.options.showLogType ? logType : undefined,
+        `${this.options.prefix ? `${this.options.prefix} ` : ''}${message}`,
+        levelColor,
+        typeColor,
+        this.options.showEmoji,
+        symbols[level],
+        metadata?.source,
+        metadata
     );
+  }
+
+  // Add timestamp caching
+  private lastTimestamp: string = '';
+  private lastTimestampTime: number = 0;
+
+  private getFormattedTimestamp(): string {
+    const now = Date.now();
+    if (now - this.lastTimestampTime < 1000) {
+        return this.lastTimestamp;
+    }
+    
+    this.lastTimestamp = getTimestamp(this.options.format);
+    this.lastTimestampTime = now;
+    return this.lastTimestamp;
   }
 
   /**
@@ -166,7 +200,7 @@ export class Logger {
    * @returns Whether the message should be logged
    */
   private shouldLog(level: LogLevel): boolean {
-    const configuredLevel = defaultLogLevels[this.options.level || 'info'];
+    const configuredLevel = defaultLogLevels[this.options.minLevel || 'info'];
     const messageSeverity = defaultTypeMapping[level];
     const messageLevel = defaultLogLevels[messageSeverity];
     

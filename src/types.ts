@@ -84,6 +84,8 @@ export interface LogMetadata {
  * @property rotate - Enable/disable log file rotation
  * @property rotateCount - Number of rotated log files to maintain
  * @property silent - Suppress all log output when true
+ * @property showEmoji - Enable/disable emojis in log messages
+ * @property showLogType - Enable/disable log type display
  */
 export interface LoggerOptions {
   level?: LogSeverity;
@@ -99,6 +101,8 @@ export interface LoggerOptions {
   rotate?: boolean;
   rotateCount?: number;
   silent?: boolean;
+  showEmoji?: boolean;
+  showLogType?: boolean;
 }
 
 /**
